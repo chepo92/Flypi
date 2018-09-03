@@ -374,7 +374,7 @@ float HoldTemp(float finalTemp, int tempSensorPin,
 
 void updateRing(int hue1, int hue2, int hue3, int hue4) {
   for (int i = 0; i < ring_nPixels; i++) {
-    pixels.setPixelColor(i, pixels.Color(hue1, hue2, hue3, hue4));
+    pixels.setPixelColor(i, pixels.Color(hue1, hue2, hue3));
   }
 }
 

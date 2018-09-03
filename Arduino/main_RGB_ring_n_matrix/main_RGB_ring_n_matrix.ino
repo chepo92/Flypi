@@ -108,7 +108,7 @@ matrixPattern2[] =
 
 //create function to control LED ring
 
-Adafruit_NeoPixel pixels = Adafruit_NeoPixel(ring_nPixels, RingPin, NEO_GRBW + NEO_KHZ800);
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(ring_nPixels, RingPin, NEO_GRB + NEO_KHZ800);
 
 
 
@@ -282,13 +282,15 @@ void loop() {
       }//end for j
     }//end if incomingData==3
 
-     if (term2.toInt() == 4) {
+/*     if (term2.toInt() == 4) {
       //matrix pattern 2
       matrix.clear();
       matrix.drawBitmap(0, 0, matrixPattern4, 8, 8, LED_ON);
       matrix.drawBitmap(0, 8, matrixPattern4, 8, 8, LED_ON);
       matrix.writeDisplay();
       }
+
+      */
   Serial.println("wtd");}//end if term1 == MAT
 
 
@@ -317,7 +319,7 @@ void loop() {
     if (term2.toInt() == 0) { //ring off
       incomingData = 0;
       ringOn = 0;
-      updateRing(0, 0, 0, 0);
+      updateRing(0, 0, 0);
       pixels.show();}
   Serial.println("<wtd>>");}//end if "RIN"
 
@@ -370,7 +372,7 @@ void loop() {
   if (term1=="RZAT") {
 
     if (ringOn == 1) {
-      updateRing(zapRed, zapGreen, zapBlue, zapWhite);
+      updateRing(zapRed, zapGreen, zapBlue);
       pixels.show();
       waiting(term2.toInt());
       updateRing(ringRedHue, ringGreenHue, ringBlueHue);
@@ -481,9 +483,9 @@ float HoldTemp(float finalTemp, int tempSensorPin,
 
 }
 
-void updateRing(int hue1, int hue2, int hue3, int hue4) {
+void updateRing(int hue1, int hue2, int hue3) {
   for (int i = 0; i < ring_nPixels; i++) {
-    pixels.setPixelColor(i, pixels.Color(hue1, hue2, hue3, hue4));
+    pixels.setPixelColor(i, pixels.Color(hue1, hue2, hue3));
   }
 }
 

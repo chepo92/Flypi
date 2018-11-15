@@ -1,79 +1,6 @@
-// Import libraries
-#include <Adafruit_NeoPixel.h> // LED Ring
-#include <Wire.h> // LED Matrix
-#include <Adafruit_LEDBackpack.h> // LED Matrix
-#include <Adafruit_GFX.h> // LED Matrix
-#include <Servo.h> //servo motor controlling the autofocus
 
-//create servo object ****************//
-Servo focusServo;
-
-//************************************//
-// Define Pin allocations on Arduino
-//*********************************//
-String token;
-String term1;
-String term2;
-//String temporary;
-int index;
-unsigned int incomingData = 0;
-//unsigned int address=0;
-unsigned int correction = 0;
-//  int control_ledpin = 0;
-int LED1Pin = 10;
-int LED2Pin = 11; // NOT CONFIGURED
-int RedGBPin = 6;
-int RGreenBPin = 4;
-int RGBluePin = 5;
-int RingPin = 7;
-int servoPin = 8;
-int servoOnPin = 9;
-int peltierEnablePin = 13;
-int peltierHeatPin1 = 3;//12
-int peltierCoolPin1 = 2;//8
-int tempSensorPin = A7;//A5
-int startFlag = 0;
-
-//variables needed for peripherical functions
-//ring
-int ring_nPixels = 12;
-int ringOn = 0;
-int ringRedHue = 10;
-int ringGreenHue = 10;
-int ringBlueHue = 10;
-//int ringWhiteHue=0;
-int zapRed = 0;
-int zapGreen = 0;
-int zapBlue = 0;
-int zapWhite = 0;
-int ringBright = 0;
-int matBright = 0;
-int waitmils = 0;
-//peltier
-int peltOn = 0;
-int tempToAnalog = 0;
-int analogOut = 0;
-float tempSensVolt = 0;
-float temperature = 0;
-float newTemp = 30.0;
-unsigned long time1 = 0;
-unsigned long time2 = 0;
-//string incomingData1='';
-//*********************************//
-float TempTol = 0.5; // tolerance
-float highLimit = 40.0; //in Celsius
-float lowLimit = 13.0; //in Celsius
-
-//********************************//
-
-
-
-//create function to control LED ring
-
-Adafruit_NeoPixel pixels = Adafruit_NeoPixel(ring_nPixels, RingPin, NEO_GRB + NEO_KHZ800);
-
-
-
+#include "Pins.h"
+//#include "SerialParsing.h"
 
 void setup()
 { //start serial port
@@ -105,19 +32,23 @@ void loop() {
   if (Serial.available() > 0) {
 
     token = Serial.readStringUntil('>');
-    //Serial.println(sizeof(token));
-    //delay(5);
+    ////Serial.println(sizeof(token));
+    ////delay(5);
     index = token.indexOf('<');
     term1 = token.substring(0,index);
-    //Serial.println(term1);
+    ////Serial.println(term1);
     term2 = token.substring(index+1);
-    //Serial.println(term2);
+    intTerm2 = term2.toInt();
+    ////Serial.println(term2);
+    
+    //term1,term2 = serialParser();
+    //Serial.println(term1);
   }
 
   //timing
   if (term1 == "TIM") {
 
-    waitmils = term2.toInt();
+    waitmils = intTerm2;
     waiting(waitmils);
     Serial.println("<wtd>>");
     }
@@ -125,7 +56,7 @@ void loop() {
   //check temp sensor
   if (term1 == "TEM")
     {  temperature = checkTemp(tempSensorPin);
-        if (term2.toInt()!=99){newTemp=term2.toInt();}
+        if (intTerm2!=99){newTemp=intTerm2;}
        Serial.println(temperature);
 
        if (peltOn == 1) {
@@ -146,13 +77,13 @@ void loop() {
 
   //***************SERVO******************////
   if (term1 == "SER") {
-    if (term2.toInt() == 90) {
+    if (intTerm2 == 90) {
       digitalWrite(servoOnPin, LOW);
 
     }
     else {
       digitalWrite(servoOnPin, HIGH);
-      focusServo.write(term2.toInt()); //because this is a cont. servo,
+      focusServo.write(intTerm2); //because this is a cont. servo,
       //this will set the velocity, not the pos.
       delay(15);
       //correction = 0;
@@ -162,12 +93,12 @@ void loop() {
   //////////////////////////////////////////////////
   //LED1
   if (term1 == "LD1") {
-    if (term2.toInt()==1){digitalWrite(LED1Pin, HIGH);}
-    if (term2.toInt() == 0) {digitalWrite(LED1Pin, LOW);}
+    if (intTerm2==1){digitalWrite(LED1Pin, HIGH);}
+    if (intTerm2 == 0) {digitalWrite(LED1Pin, LOW);}
   Serial.println("<wtd>>");}
   if (term1 == "LZ1"){
     digitalWrite(LED1Pin, HIGH);
-    waiting(term2.toInt());
+    waiting(intTerm2);
     digitalWrite(LED1Pin, LOW);
 
     Serial.println("<wtd>>");
@@ -177,14 +108,14 @@ void loop() {
 
   //LED2
   if (term1 == "LD2") {
-    if (term2.toInt()==1){digitalWrite(LED2Pin, HIGH);}
-    if (term2.toInt() == 0) {digitalWrite(LED2Pin, LOW);}
+    if (intTerm2 == 1){digitalWrite(LED2Pin, HIGH);}
+    if (intTerm2 == 0) {digitalWrite(LED2Pin, LOW);}
 
   Serial.println("<wtd>>");}
 
     if (term1 == "LZ2"){
     digitalWrite(LED2Pin, HIGH);
-    waiting(term2.toInt());
+    waiting(intTerm2);
     digitalWrite(LED2Pin, LOW);
 
 
@@ -201,12 +132,12 @@ void loop() {
 
   //RING
   if (term1=="RIN"){
-    if (term2.toInt() == 1) { //ring on
+    if (intTerm2 == 1) { //ring on
       ringOn = 1;
       updateRing(ringRedHue, ringGreenHue, ringBlueHue);
       pixels.show();}
-    if (term2.toInt() == 0) { //ring off
-      incomingData = 0;
+    if (intTerm2 == 0) { //ring off
+      //incomingData = 0;
       ringOn = 0;
       updateRing(0, 0, 0);
       pixels.show();}
@@ -216,7 +147,7 @@ void loop() {
 
   if (term1=="RRE"){
     //oldRed = ringRedHue;
-    ringRedHue=term2.toInt();
+    ringRedHue=intTerm2;
     updateRing(ringRedHue, ringGreenHue, ringBlueHue);
 
     if (ringOn == 1) {
@@ -230,7 +161,7 @@ void loop() {
   if (term1 == "RGR") { //ring green
     //oldGreen = ringGreenHue;
     //set the brightness of the green channel
-    ringGreenHue=term2.toInt();
+    ringGreenHue=intTerm2;
     updateRing(ringRedHue, ringGreenHue, ringBlueHue);
     if (ringOn == 1) {
       pixels.show();}
@@ -238,32 +169,32 @@ void loop() {
 
   if (term1 == "RBL") { //ring blue
     //oldBlue = ringBlueHue;
-    ringBlueHue = term2.toInt();
+    ringBlueHue = intTerm2;
     updateRing(ringRedHue, ringGreenHue, ringBlueHue);
     if (ringOn == 1) {pixels.show();}
 
   Serial.println("<wtd>>");}//end if RBL
 
   if (term1 == "RAL") { //ring all together
-    ringBlueHue = term2.toInt();
-    ringGreenHue = term2.toInt();
-    ringRedHue = term2.toInt();
+    ringBlueHue = intTerm2;
+    ringGreenHue = intTerm2;
+    ringRedHue = intTerm2;
     updateRing(ringRedHue, ringGreenHue, ringBlueHue);
     if (ringOn == 1) {
       pixels.show();
     }
   Serial.println("<wtd>>");}
 
-  if (term1=="RZAR") {zapRed = term2.toInt();Serial.println("<wtd>>");}
-  if (term1=="RZAG") {zapGreen = term2.toInt();Serial.println("<wtd>>");}
-  if (term1=="RZAB") {zapBlue = term2.toInt();Serial.println("<wtd>>");}
+  if (term1=="RZAR") {zapRed = intTerm2;Serial.println("<wtd>>");}
+  if (term1=="RZAG") {zapGreen = intTerm2;Serial.println("<wtd>>");}
+  if (term1=="RZAB") {zapBlue = intTerm2;Serial.println("<wtd>>");}
 
   if (term1=="RZAT") {
 
     if (ringOn == 1) {
       updateRing(zapRed, zapGreen, zapBlue);
       pixels.show();
-      waiting(term2.toInt());
+      waiting(intTerm2);
       updateRing(ringRedHue, ringGreenHue, ringBlueHue);
 
       pixels.show();
@@ -275,13 +206,13 @@ void loop() {
 
   //PELTIER
   if (term1 == "PEL") { //Peltier on
-  if (term2.toInt()==1){
+  if (intTerm2==1){
     //incomingData = 0;
     digitalWrite(peltierEnablePin, HIGH);
     peltOn = 1;
   }
 
-  if (term2.toInt() == 0) { //Peltier off
+  if (intTerm2 == 0) { //Peltier off
 //    incomingData = 0;
     digitalWrite(peltierEnablePin, LOW);
     digitalWrite(peltierHeatPin1, LOW);
@@ -293,10 +224,11 @@ void loop() {
   }
   Serial.println("<wtd>>");}
 
-  if (term1 == "PET") {newTemp = term2.toInt();
+  if (term1 == "PET") {newTemp = intTerm2;
   Serial.println("<wtd>>");}
-term1=String("0");
-term2=String("0");
+  
+//term1=String("0");
+//term2=String("0");
 }//end void loop
 
 
@@ -375,8 +307,8 @@ float HoldTemp(float finalTemp, int tempSensorPin,
 void updateRing(int hue1, int hue2, int hue3) {
   for (int i = 0; i < ring_nPixels; i++) {
     pixels.setPixelColor(i, pixels.Color(hue1, hue2, hue3));
-  }
-}
+  }//end for
+}//end updateRing
 
 void waiting(int millistowait) {
   long int time3=0;
